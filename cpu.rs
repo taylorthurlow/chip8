@@ -1,3 +1,9 @@
+use std::collections::HashMap;
+use std::fs::File;
+use std::io::Read;
+
+mod instruction;
+
 pub struct CPU {
     // General-purpose registers
     // 16 8-bit data registers named V0 to VF. The VF register doubles as a flag
@@ -62,21 +68,54 @@ impl Default for CPU {
 }
 
 impl CPU {
-    // pub fn initialize(&mut self) {
-    //     // Clear display
-    //     // Load fontset
-    // }
-
-    pub fn fetch_decode_execute(&mut self) {
-        // Fetch
-        self.opcode = read_word(self.memory, self.pc);
-
-        // Decode
-        println!("Decoding opcode: {}", self.opcode);
-
-        // Execute
-        println!("Executing opcode: {}", self.opcode);
-
-        // Update timers
+    pub fn initialize(&mut self) {
+        // Clear display
+        // Load fontset
     }
+
+    pub fn load_program(&mut self, filename: &str) -> std::result::Result<(), std::io::Error> {
+        let mut file = File::open(filename)?;
+        // let mut buffer = [0; 4096];
+        let mut buffer = vec![0u8];
+
+        file.read_to_end(&mut buffer)?;
+
+        for index in 0..buffer.len() - 1 {
+            self.memory[index + 512] = buffer[index];
+        }
+
+        Ok(())
+    }
+
+    pub fn fetch_decode_execute(&mut self) -> Result<bool, &'static str> {
+        // Fetch
+        if self.pc < 4096 {
+            self.opcode = read_word(self.memory, self.pc);
+            self.pc += 16;
+
+            // Decode
+            match instruction::lookup(self.opcode) {
+                Ok(i) => {
+                    // Execute
+                    let instruction: instruction::Instruction = i;
+                    if instruction.opcode != 0x0000 {
+                        println!("Executing opcode: {:#06X}", self.opcode);
+                    }
+                }
+                Err(e) => {
+                    return Err(e);
+                }
+            };
+
+            Ok(false)
+        } else {
+            Ok(true)
+        }
+    }
+}
+
+// Fetch a single word from memory by fetching a byte at an index, fetching the
+// next byte, and ORing the results after a bit shift.
+fn read_word(memory: [u8; 4096], index: u16) -> u16 {
+    (memory[index as usize] as u16) << 8 | (memory[index as usize + 1] as u16)
 }

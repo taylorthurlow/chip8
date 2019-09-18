@@ -1,11 +1,23 @@
-// Fetch a single word from memory by fetching a byte at an index, fetching the
-// next byte, and ORing the results after a bit shift.
-fn read_word(memory: [u8; 4096], index: u16) -> u16 {
-    (memory[index as usize] as u16) << 8 | (memory[index as usize + 1] as u16)
-}
+mod cpu;
 
 fn main() {
-    let mut cpu: CPU = CPU { ..Default::default() };
+    let mut cpu: cpu::CPU = cpu::CPU { ..Default::default() };
 
-    cpu.fetch_decode_execute();
+    cpu.initialize();
+
+    match cpu.load_program("test_opcode.ch8") {
+        Ok(_) => println!("Loaded program successfully."),
+        Err(e) => eprintln!("Program load failed: {}", e),
+    }
+
+    loop {
+        match cpu.fetch_decode_execute() {
+            Ok(reached_end) => {
+                if reached_end {
+                    break;
+                }
+            }
+            Err(e) => eprintln!("Error in fetch/decode/execute: {}", e),
+        }
+    }
 }
