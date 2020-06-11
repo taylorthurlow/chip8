@@ -7,7 +7,7 @@ pub struct Instruction {
 }
 
 pub fn lookup(opcode: u16) -> Result<Instruction, &'static str> {
-    return match opcode {
+    match opcode {
         0x0000 => Ok(Instruction {
             opcode: opcode,
             category: String::from("NOOP"),
@@ -19,5 +19,5 @@ pub fn lookup(opcode: u16) -> Result<Instruction, &'static str> {
             description: String::from("Clears the screen."),
         }),
         _ => Err("Opcode not found"),
-    };
+    }
 }
