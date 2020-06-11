@@ -92,7 +92,10 @@ impl CPU {
                     // Execute
                     let instruction: instruction::Instruction = i;
                     if instruction.opcode != 0x0000 {
-                        println!("Executing opcode: {:#06X}", self.opcode);
+                        println!(
+                            "Executing opcode: {:#06X} - {:.100}",
+                            instruction.opcode, instruction.description
+                        );
                     }
                 }
                 Err(e) => {
