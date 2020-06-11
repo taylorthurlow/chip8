@@ -84,7 +84,7 @@ impl CPU {
         // Fetch
         if self.pc < 4096 {
             self.opcode = read_word(self.memory, self.pc);
-            self.pc += 16;
+            self.pc += 2;
 
             // Decode
             match instruction::lookup(self.opcode) {
