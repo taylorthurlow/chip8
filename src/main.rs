@@ -1,7 +1,9 @@
 mod cpu;
 
 fn main() {
-    let mut cpu: cpu::CPU = cpu::CPU { ..Default::default() };
+    let mut cpu: cpu::CPU = cpu::CPU {
+        ..Default::default()
+    };
 
     cpu.initialize();
 

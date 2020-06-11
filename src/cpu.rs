@@ -11,7 +11,7 @@ pub struct CPU {
     // operation, VF is the carry flag, while in subtraction, it is the "no
     // borrow" flag. In the draw instruction, VF is set upon pixel collision.
     pub v: [u8; 16],
-    pub i: u16, // index register
+    pub i: u16,  // index register
     pub pc: u16, // program counter
 
     // Opcodes
