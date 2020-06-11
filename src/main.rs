@@ -7,7 +7,7 @@ fn main() {
 
     cpu.initialize();
 
-    match cpu.load_program("test_opcode.ch8") {
+    match cpu.load_program("pong.ch8") {
         Ok(_) => println!("Loaded program successfully."),
         Err(e) => eprintln!("Program load failed: {}", e),
     }
