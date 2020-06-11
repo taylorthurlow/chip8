@@ -6,7 +6,7 @@ pub struct Instruction {
     pub description: String,
 }
 
-pub fn lookup(opcode: u16) -> Result<Instruction, &'static str> {
+pub fn lookup(opcode: u16) -> Result<Instruction, String> {
     match opcode {
         0x0000 => Ok(Instruction {
             opcode,

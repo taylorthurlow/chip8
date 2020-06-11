@@ -80,7 +80,7 @@ impl CPU {
         Ok(())
     }
 
-    pub fn fetch_decode_execute(&mut self) -> Result<bool, &'static str> {
+    pub fn fetch_decode_execute(&mut self) -> Result<bool, String> {
         // Fetch
         if self.pc < 4096 {
             self.opcode = read_word(self.memory, self.pc);
