@@ -1,7 +1,3 @@
-use std::collections::HashMap;
-use std::fs::File;
-use std::io::Read;
-
 mod instruction;
 
 pub struct CPU {
@@ -74,14 +70,11 @@ impl CPU {
     }
 
     pub fn load_program(&mut self, filename: &str) -> std::result::Result<(), std::io::Error> {
-        let mut file = File::open(filename)?;
-        // let mut buffer = [0; 4096];
-        let mut buffer = vec![0u8];
+        let buffer = std::fs::read(filename)?;
 
-        file.read_to_end(&mut buffer)?;
-
-        for index in 0..buffer.len() - 1 {
-            self.memory[index + 512] = buffer[index];
+        for (index, value) in buffer.iter().enumerate() {
+            // println!("Setting index {:0>4X} to value {:0>2X}", index + 0x200, *value);
+            self.memory[index + 0x200] = *value;
         }
 
         Ok(())
