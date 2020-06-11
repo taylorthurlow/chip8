@@ -9,12 +9,12 @@ pub struct Instruction {
 pub fn lookup(opcode: u16) -> Result<Instruction, &'static str> {
     match opcode {
         0x0000 => Ok(Instruction {
-            opcode: opcode,
+            opcode,
             category: String::from("NOOP"),
             description: String::from("Performs no operation."),
         }),
         0x00E0 => Ok(Instruction {
-            opcode: opcode,
+            opcode,
             category: String::from("Display"),
             description: String::from("Clears the screen."),
         }),
