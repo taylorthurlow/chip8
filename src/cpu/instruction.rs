@@ -32,7 +32,10 @@ pub fn lookup(opcode: u16) -> Result<Instruction, String> {
             opcode,
             category: String::from("Flow"),
             description: String::from("Jump to address."),
-            definition: Box::new(|_cpu| eprint!("No definition.")),
+            definition: Box::new(|cpu| {
+                // Format: 1NNN
+                cpu.pc = cpu.opcode & 0x0FFF;
+            }),
         }),
         0x2000..=0x2FFF => Ok(Instruction {
             opcode,
@@ -58,25 +61,53 @@ pub fn lookup(opcode: u16) -> Result<Instruction, String> {
             opcode,
             category: String::from("Conditional"),
             description: String::from("Skip next instruction if VX not equal to NN."),
-            definition: Box::new(|_cpu| eprint!("No definition.")),
+            definition: Box::new(|cpu|  {
+                // Format: 4XNN
+                let x = (cpu.opcode & 0x0F00) >> 8;
+                let n = cpu.opcode & 0x00FF;
+
+                if cpu.v[x as usize] != n as u8 {
+                    cpu.pc += 2;
+                }
+            }),
         }),
         0x5000..=0x5FFF => Ok(Instruction {
             opcode,
             category: String::from("Conditional"),
             description: String::from("Skip next instruction if VX equals VY."),
-            definition: Box::new(|_cpu| eprint!("No definition.")),
+            definition: Box::new(|cpu|  {
+                // Format: 5XY0
+                let x = (cpu.opcode & 0x0F00) >> 8;
+                let y = (cpu.opcode & 0x00F0) >> 4;
+
+                if cpu.v[x as usize] == cpu.v[y as usize] {
+                    cpu.pc += 2;
+                }
+            }),
         }),
         0x6000..=0x6FFF => Ok(Instruction {
             opcode,
             category: String::from("Constant"),
             description: String::from("Set VX to NN."),
-            definition: Box::new(|_cpu| eprint!("No definition.")),
+            definition: Box::new(|cpu|  {
+                // Format: 6XNN
+                let x = (cpu.opcode & 0x0F00) >> 8;
+                let n = cpu.opcode & 0x00FF;
+
+                cpu.v[x as usize] = n as u8;
+            }),
         }),
         0x7000..=0x7FFF => Ok(Instruction {
             opcode,
             category: String::from("Constant"),
             description: String::from("Add NN to VX. Carry flag is not changed."),
-            definition: Box::new(|_cpu| eprint!("No definition.")),
+            definition: Box::new(|cpu|  {
+                // Format: 7XNN
+                let x = (cpu.opcode & 0x0F00) >> 8;
+                let n = cpu.opcode & 0x00FF;
+
+                cpu.v[x as usize] += n as u8;
+            }),
         }),
         0x8000..=0x8FFF => {
             // Match against rightmost hex digit
@@ -85,37 +116,86 @@ pub fn lookup(opcode: u16) -> Result<Instruction, String> {
                     opcode,
                     category: String::from("Assignment"),
                     description: String::from("Set VX to the value of VY."),
-                    definition: Box::new(|_cpu| eprint!("No definition.")),
+                    definition: Box::new(|cpu|  {
+                        // Format: 8XY0
+                        let x = (cpu.opcode & 0x0F00) >> 8;
+                        let y = (cpu.opcode & 0x0F00) >> 4;
+
+                        cpu.v[x as usize] = cpu.v[y as usize]; 
+                    }),
                 }),
                 0x1 => Ok(Instruction {
                     opcode,
                     category: String::from("Bitwise operation"),
                     description: String::from("Set VX to VX OR VY."),
-                    definition: Box::new(|_cpu| eprint!("No definition.")),
+                    definition: Box::new(|cpu|  {
+                        // Format: 8XY1
+                        let x = (cpu.opcode & 0x0F00) >> 8;
+                        let y = (cpu.opcode & 0x0F00) >> 4;
+
+                        cpu.v[x as usize] = cpu.v[x as usize] | cpu.v[y as usize]; 
+                    }),
                 }),
                 0x2 => Ok(Instruction {
                     opcode,
                     category: String::from("Bitwise operation"),
                     description: String::from("Sets VX to VX AND VY."),
-                    definition: Box::new(|_cpu| eprint!("No definition.")),
+                    definition: Box::new(|cpu|  {
+                        // Format: 8XY2
+                        let x = (cpu.opcode & 0x0F00) >> 8;
+                        let y = (cpu.opcode & 0x0F00) >> 4;
+
+                        cpu.v[x as usize] = cpu.v[x as usize] & cpu.v[y as usize]; 
+                    }),
                 }),
                 0x3 => Ok(Instruction {
                     opcode,
                     category: String::from("Bitwise operation"),
                     description: String::from("Set VX to VX XOR VY."),
-                    definition: Box::new(|_cpu| eprint!("No definition.")),
+                    definition: Box::new(|cpu|  {
+                        // Format: 8XY3
+                        let x = (cpu.opcode & 0x0F00) >> 8;
+                        let y = (cpu.opcode & 0x0F00) >> 4;
+
+                        cpu.v[x as usize] = cpu.v[x as usize] ^ cpu.v[y as usize]; 
+                    }),
                 }),
                 0x4 => Ok(Instruction {
                     opcode,
                     category: String::from("Math"),
                     description: String::from("Add VY to VX. VF is set to 1 when there's a carry, and 0 otherwise."),
-                    definition: Box::new(|_cpu| eprint!("No definition.")),
+                    definition: Box::new(|cpu|  {
+                        // Format: 8XY4
+                        let x = (cpu.opcode & 0x0F00) >> 8;
+                        let y = (cpu.opcode & 0x0F00) >> 4;
+
+                        // Add u8 as u16 values to check for carry
+                        let sum: u16 = cpu.v[x as usize] as u16 + cpu.v[y as usize] as u16;
+
+                        cpu.v[x as usize] = sum as u8;
+
+                        // Set carry flag
+                        let carry: bool = (sum & 0xFF00) > 0;
+                        cpu.v[0xF as usize] = if carry { 1 } else { 0 };
+                    }),
                 }),
                 0x5 => Ok(Instruction {
                     opcode,
                     category: String::from("Math"),
                     description: String::from("Subtract VY from VX. VF is set to 0 when there's a borrow, and 1 otherwise."),
-                    definition: Box::new(|_cpu| eprint!("No definition.")),
+                    definition: Box::new(|cpu|  {
+                        // Format: 8XY5
+                        let x = (cpu.opcode & 0x0F00) >> 8;
+                        let y = (cpu.opcode & 0x0F00) >> 4;
+
+                        // Subtract u8 as i16 values to check for borrow
+                        let difference: i16 = cpu.v[x as usize] as i16 + cpu.v[y as usize] as i16;
+
+                        cpu.v[x as usize] = difference as u8;
+
+                        // Set borrow flag
+                        cpu.v[0xF as usize] = if difference < 0 { 0 } else { 1 };
+                    }),
                 }),
                 0x6 => Ok(Instruction {
                     opcode,
