@@ -1,4 +1,4 @@
-mod cpu;
+pub mod cpu;
 
 fn main() {
     let mut cpu: cpu::CPU = cpu::CPU {
