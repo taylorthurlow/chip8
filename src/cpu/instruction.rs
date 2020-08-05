@@ -119,7 +119,7 @@ pub fn lookup(opcode: u16) -> Result<Instruction, String> {
                     definition: Box::new(|cpu|  {
                         // Format: 8XY0
                         let x = (cpu.opcode & 0x0F00) >> 8;
-                        let y = (cpu.opcode & 0x0F00) >> 4;
+                        let y = (cpu.opcode & 0x00F0) >> 4;
 
                         cpu.v[x as usize] = cpu.v[y as usize]; 
                     }),
@@ -131,7 +131,7 @@ pub fn lookup(opcode: u16) -> Result<Instruction, String> {
                     definition: Box::new(|cpu|  {
                         // Format: 8XY1
                         let x = (cpu.opcode & 0x0F00) >> 8;
-                        let y = (cpu.opcode & 0x0F00) >> 4;
+                        let y = (cpu.opcode & 0x00F0) >> 4;
 
                         cpu.v[x as usize] = cpu.v[x as usize] | cpu.v[y as usize]; 
                     }),
@@ -143,7 +143,7 @@ pub fn lookup(opcode: u16) -> Result<Instruction, String> {
                     definition: Box::new(|cpu|  {
                         // Format: 8XY2
                         let x = (cpu.opcode & 0x0F00) >> 8;
-                        let y = (cpu.opcode & 0x0F00) >> 4;
+                        let y = (cpu.opcode & 0x00F0) >> 4;
 
                         cpu.v[x as usize] = cpu.v[x as usize] & cpu.v[y as usize]; 
                     }),
@@ -155,7 +155,7 @@ pub fn lookup(opcode: u16) -> Result<Instruction, String> {
                     definition: Box::new(|cpu|  {
                         // Format: 8XY3
                         let x = (cpu.opcode & 0x0F00) >> 8;
-                        let y = (cpu.opcode & 0x0F00) >> 4;
+                        let y = (cpu.opcode & 0x00F0) >> 4;
 
                         cpu.v[x as usize] = cpu.v[x as usize] ^ cpu.v[y as usize]; 
                     }),
@@ -167,7 +167,7 @@ pub fn lookup(opcode: u16) -> Result<Instruction, String> {
                     definition: Box::new(|cpu|  {
                         // Format: 8XY4
                         let x = (cpu.opcode & 0x0F00) >> 8;
-                        let y = (cpu.opcode & 0x0F00) >> 4;
+                        let y = (cpu.opcode & 0x00F0) >> 4;
 
                         // Add u8 as u16 values to check for carry
                         let sum: u16 = cpu.v[x as usize] as u16 + cpu.v[y as usize] as u16;
@@ -186,10 +186,10 @@ pub fn lookup(opcode: u16) -> Result<Instruction, String> {
                     definition: Box::new(|cpu|  {
                         // Format: 8XY5
                         let x = (cpu.opcode & 0x0F00) >> 8;
-                        let y = (cpu.opcode & 0x0F00) >> 4;
+                        let y = (cpu.opcode & 0x00F0) >> 4;
 
                         // Subtract u8 as i16 values to check for borrow
-                        let difference: i16 = cpu.v[x as usize] as i16 + cpu.v[y as usize] as i16;
+                        let difference: i16 = cpu.v[x as usize] as i16 - cpu.v[y as usize] as i16;
 
                         cpu.v[x as usize] = difference as u8;
 
@@ -200,20 +200,40 @@ pub fn lookup(opcode: u16) -> Result<Instruction, String> {
                 0x6 => Ok(Instruction {
                     opcode,
                     category: String::from("Bitwise operation"),
-                    description: String::from("Store the least significant bit of VX in VF an shifts VX right by 1."),
-                    definition: Box::new(|_cpu| eprint!("No definition.")),
+                    description: String::from("Store the least significant bit of VX in VF and shift VX right by 1."),
+                    definition: Box::new(|cpu|  {
+                        // Format: 8XY6
+                        let x = (cpu.opcode & 0x0F00) >> 8;
+
+                        cpu.v[0xF as usize] = cpu.v[x as usize] & 0x000F & 0b0001;
+                        cpu.v[x as usize] = cpu.v[x as usize] >> 1;
+                    }),
                 }),
                 0x7 => Ok(Instruction {
                     opcode,
                     category: String::from("Math"),
                     description: String::from("Set VX to VY minus VX. VF is set to 0 when there's a bottow, and 1 otherwise."),
-                    definition: Box::new(|_cpu| eprint!("No definition.")),
+                    definition: Box::new(|cpu|  {
+                        // Format: 8XY7
+                        let x = (cpu.opcode & 0x0F00) >> 8;
+                        let y = (cpu.opcode & 0x0F00) >> 4;
+                        let difference: i16 = cpu.v[y as usize] as i16 - cpu.v[x as usize] as i16;
+
+                        cpu.v[x as usize] = difference as u8;
+                        cpu.v[0xF as usize] = if difference < 0 { 0 } else { 1 };
+                    }),
                 }),
                 0xE => Ok(Instruction {
                     opcode,
                     category: String::from("Bitwise operation"),
                     description: String::from("Store the most significant bit of VX in VF an shifts VX left by 1."),
-                    definition: Box::new(|_cpu| eprint!("No definition.")),
+                    definition: Box::new(|cpu|  {
+                        // Format: 8XYE
+                        let x = (cpu.opcode & 0x0F00) >> 8;
+
+                        cpu.v[0xF as usize] = cpu.v[x as usize] & 0x000F & 0b0001;
+                        cpu.v[x as usize] = cpu.v[x as usize] << 1;
+                    }),
                 }),
                 _ => Err(format!("Opcode {} not found", format!("{:0>4X}", opcode))),
             }
